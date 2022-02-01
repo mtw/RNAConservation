@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 #
-# remove gap-only sequences from  Clustal files
+# remove gap-only sequences from MSA files
+# Last changed Time-stamp: <2022-02-01 22:46:38 mtw>
 
 use strict;
 use warnings;
@@ -12,30 +13,56 @@ use Pod::Usage;
 use Bio::AlignIO;
 
 my $infile_aln = undef;
+my $infmt = 'clustalw';
+my $outfmt = undef;
 my ($in,$out);
+my $suffix="out";
+my $ratio = 1;
+
+my %table = (
+	     'clustalw' => 'aln',
+	     'stockholm' => 'stk',
+	     'maf' => 'maf',
+	     'fasta' => 'fa',
+	    );
 
 Getopt::Long::config('no_ignore_case');
-pod2usage(-verbose => 1) unless GetOptions("a|aln=s"    => \$infile_aln,
-                                           "man"        => sub{pod2usage(-verbose => 2)},
-                                           "help|h"     => sub{pod2usage(1)}
-					  );
+pod2usage(-verbose => 1)
+  unless GetOptions("a|aln=s"      => \$infile_aln,
+		    "i|infmt=s"    => \$infmt,
+		    "o|outfmt=s"   => \$outfmt,
+		    "r|gapratio=s" => \$ratio,
+		    "man"          => sub{pod2usage(-verbose => 2)},
+		    "help|h"       => sub{pod2usage(1)}
+		   );
 
 unless (defined ($infile_aln)){
-  warn "Please provide an infput alignment in ClustalW format to  -a|--aln option ...";
+  warn "Please provide an input multiple sequence alignment (MSA) file to  -a|--aln option.";
   pod2usage(-verbose => 0);
 }
 
 unless (-f $infile_aln){
-  warn "Cannot find input alignment privided via-a|--aln option ...";
+  warn "Cannot find input multiple sequence alignment (MSA) privided via -a|--aln option.";
   pod2usage(-verbose => 0);
 }
 
+if ($ratio < 0 || $ratio > 1){
+  warn "gap ratio parameter mut be 0 < r < 1";
+   pod2usage(-verbose => 0);
+}
+
+
+if (defined $outfmt) {$outfmt = lc $outfmt}
+unless (defined $outfmt) {$outfmt=$infmt}
+(defined $table{$outfmt} ) ? $suffix = $table{$outfmt}: die "No file suffix known for $infmt";
+
 if (defined $infile_aln){
   $in  = Bio::AlignIO->new(-file   => "$infile_aln",
-			   -format => 'ClustalW',
+			   -format => $infmt,
 			   -displayname_flat => 1);
   $out = Bio::AlignIO->new(-fh   => \*STDOUT ,
-			   -format => 'ClustalW');
+			   -format => $outfmt,
+			   -displayname_flat => 1);
 }
 else { croak "Could not process input alignment" }
 
@@ -51,10 +78,14 @@ my @keep = ();
 foreach my $i (1..$dim){
   my $alnT = $aln->get_seq_by_pos($i);
   my $seq = $alnT->seq();
-  # check if we have a gap-only substring of length $l
+  # check if we have a gap-only substring of length $l, aka gap-only sequence
   index($seq,$gapstring) == 0 ? next : 1;
-  push @keep, $i;
-#  print "keep $seq\n";
+  # To get # of matches put regex in list context, and put that into scalar context:
+  my $count = () = $seq =~ /\-/gi;
+  if ($count <= $ratio * $l){
+    push @keep, $i ;
+    # print "keep $seq\n";
+  }
 }
 
 my $subset = $aln->select_noncont(@keep);
@@ -64,15 +95,17 @@ __END__
 
 =head1 NAME
 
-remove-gaponly.pl - Remove gap-only sequences from ClustalW files
+remove-gaponly.pl - Remove lines with many gaps or gap-only lines from MSA files
 
 =head1 SYNOPSIS
 
-remove-gaponly.pl [-a|--aln I<FILE>]  [options]
+remove-gaponly.pl [-a|--aln I<FILE>] [-i|--infmt I<STRING>]
+[-o|--outfmt I<STRING>] [-r|--gapratio I<FLOAT>] [options]
 
 =head1 DESCRIPTION
 
-This script removes gap-only lines from Clustal alignment files. Simply that ;)
+This script removes gap-only lines, or lines with a predefined amount
+of gap symbols from MSA files.
 
 =head1 OPTIONS
 
@@ -80,9 +113,20 @@ This script removes gap-only lines from Clustal alignment files. Simply that ;)
 
 =item B<-a|--aln>
 
-Input file in Clustal format. Either this option or B<-f|--fa> mus be
-given.
+Input MFA file
 
+=item B<-i|--infmt>
+
+Input MSA file type. Default is 'ClustalW'
+
+=item B<-o|--outfmt>
+
+Output MSA file type. Defaults to the type of the input MSA file
+
+=item B<-r|--gapratio>
+
+Maximum fraction of allowed gaps in a sequence (0 < r < 1). Sequences
+with more gaps will be stripped from the MSA.
 
 =item B<--help -h>
 
