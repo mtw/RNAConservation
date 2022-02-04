@@ -20,6 +20,7 @@ The __RNAConservation__ pipeline builds on different tools of the [ViennaRNA](ht
 * [LocARNA](https://github.com/s-will/LocARNA) >= v2.0RC8 (optional) 
 
 ## Example Workflow
+* Set an environment variable ``RNACONSERVATIONDIR`` to the *bin* directory of your __RNAConservation__ installation
 * Run __RNALalifold__ on an RNA MSA (here, using a maximum base pair span of 150nt):
 
   `RNALalifold --noLP -L 150 --auto-id --aln --aln-EPS --aln-EPS-cols=160 --aln-EPS-ss --aln-stk=ALL --id-prefix=ALL -r --cfactor 0.6 --nfactor 0.5 --csv -f S < myMSA.stk`
@@ -28,7 +29,7 @@ The __RNAConservation__ pipeline builds on different tools of the [ViennaRNA](ht
   `split_stockholm.pl -a ALL_0001.stk`
 * Once this is done, remove the original multi-Stockholm file:
 
-   `rm ALL_0001.stk``
+   `rm ALL_0001.stk`
    
 * Run __pp_RNALalifold.sh__ on all .stk files in the current directory:
 
