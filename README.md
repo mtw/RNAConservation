@@ -19,3 +19,17 @@ The __RNAConservation__ pipeline builds on different tools of the [ViennaRNA](ht
 * [Infernal](https://github.com/EddyRivasLab/infernal) (optional)
 * [LocARNA](https://github.com/s-will/LocARNA) >= v2.0RC8 (optional) 
 
+## Example Workflow
+* Run __RNALalifold__ on an RNA MSA (here, using a maximum base pair span of 150nt):
+
+  `RNALalifold --noLP -L 150 --auto-id --aln --aln-EPS --aln-EPS-cols=160 --aln-EPS-ss --aln-stk=ALL --id-prefix=ALL -r --cfactor 0.6 --nfactor 0.5 --csv -f S < myMSA.stk`
+* Copy the generated multi-Stockholm file into a new folder and split it into in individual MSA files in Stockholm format:
+
+  `split_stockholm.pl -a ALL_0001.stk`
+* Once this is done, remove the original multi-Stockholm file:
+
+   `rm ALL_0001.stk``
+   
+* Run __pp_RNALalifold.sh__ on all .stk files in the current directory:
+
+    `pp_RNALalifold.sh -g -s`
