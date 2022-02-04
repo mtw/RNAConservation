@@ -1,3 +1,5 @@
+![GitHub](https://img.shields.io/github/license/mtw/RNAConservation)
+
 # RNAConservation
 This is a pipeline to characterize RNA structure conservation, built around the [ViennaRNA](https://github.com/ViennaRNA/ViennaRNA) Package. 
 
