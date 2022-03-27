@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Last changed Time-stamp: <2022-02-01 23:26:10 mtw>
+# Last changed Time-stamp: <2022-03-27 21:46:30 mtw>
 
 # This can be used as a RNALalifold post-processor:
 # this script post-processes a set of Stockholm files by doing
@@ -13,7 +13,7 @@ source $RNACONSERVATIONDIR/bin/RNAconservation_resources.sh
 function check_infernal {
     RC_cmbuild=$(which cmbuild)
     RC_cmcalibrate=$(which cmcalibrate)
-    
+
     if [ ! -f "${RC_cmbuild}" ]
     then
 	echo "cmbuild (Infernal) not not found, exiting ..."
@@ -44,7 +44,7 @@ do
 	REMGAP=ON
 	shift
 	;;
-	
+
     -l)             # make RNAz LocARNA-aware
 	LOCARNATE=ON
 	shift
@@ -78,13 +78,13 @@ do
   #  $reformataln -a $w.clean.aln -i clustal -o clustal > $w.reformat.aln
 
   if [[ "$STRIP" == "ON" ]]; then
-      ${RC_stripaln} -a ${wbn}.stk -f S > ${wbn}.strip.stk
+      ${RC_stripaln} -a ${wbn}.stk -f S --nosingle > ${wbn}.strip.stk
       cp -f ${wbn}.strip.stk ${wbn}.stk
   fi
 
   ${RC_eslreformat} clustal ${wbn}.stk > ${wbn}.aln
 
-  # optional: realign stripped MSA with mlocarna here 
+  # optional: realign stripped MSA with mlocarna here
 
   RNAZ_OPTIONS="-d"
   if [[ "$LOCARNATE" == "ON" ]]; then
