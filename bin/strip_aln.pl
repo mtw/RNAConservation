@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Last changed Time-stamp: <2020-06-21 23:45:32 mtw>
+# Last changed Time-stamp: <2022-03-26 20:44:41 mtw>
 # strip MSA, i.e. remove redundant sequences
 
 use strict;
@@ -18,9 +18,12 @@ my %format = (
               'F' => 'fasta',
              );
 
+my $show_version = 0;
+my $VERSION="0.2";
+my $nosingle = 0;
 my $infile_aln = undef;
 my $alnformat = undef;
-my ($in,$out,$aln);
+my ($in,$out,$aln,$subset);
 my @keep = ();
 my %seen = ();
 
@@ -28,9 +31,16 @@ Getopt::Long::config('no_ignore_case');
 pod2usage(-verbose => 1)
  unless GetOptions("a|aln=s"    => \$infile_aln,
                    "f|format=s" => \$alnformat,
+                   "nosingle"   => sub{$nosingle = 1},
+                   "version"    => sub{$show_version = 1},
                    "man"        => sub{pod2usage(-verbose => 2)},
                    "help|h"     => sub{pod2usage(1)}
                    );
+
+if ($show_version == 1){
+ print "strip_aln $VERSION\n";
+ exit(0);
+}
 
 unless (-f $infile_aln){
   warn "Cannot find input alignment privided via -a|--aln option ...";
@@ -72,8 +82,14 @@ foreach my $i (1..$aln->num_sequences){
   $seen{$seq}=1;
 }
 
-my $subset = $aln->select_noncont(@keep);
+if (scalar(@keep) == 1 && $nosingle == 1) {
+  $subset = $aln->select(1,$aln->num_sequences);
+}
+else{
+  $subset = $aln->select_noncont(@keep);
+}
 $out->write_aln($subset);
+
 
 __END__
 
@@ -100,6 +116,10 @@ consensus structure prediction or covariance model computation.
 Input file in Clustal format. Either this option or B<-f|--fa> mus be
 given.
 
+=item B<--nosingle>
+
+Don't strip the alignment in case all sequences are identical. This prevents
+construction of pseudo-alignments that contain just one sequence.
 
 =item B<--help -h>
 
