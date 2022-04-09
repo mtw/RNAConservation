@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Last changed Time-stamp: <2022-03-27 21:46:30 mtw>
+# Last changed Time-stamp: <2022-04-09 04:08:29 mtw>
 
 # This can be used as a RNALalifold post-processor:
 # this script post-processes a set of Stockholm files by doing
@@ -71,12 +71,14 @@ do
 
   cp ${wbn}.stk ${wbn}.orig.stk
 
+  # optional: remove gaps
   if [[ "$REMGAP" == "ON" ]]; then
       ${RC_removegaponly} -a ${wbn}.stk -i stockholm -r 0.5 > ${wbn}.remgap.stk 2> /dev/null
       cp -f ${wbn}.remgap.stk ${wbn}.stk
   fi
   #  $reformataln -a $w.clean.aln -i clustal -o clustal > $w.reformat.aln
 
+  # optional: remove duplicate sequence from alignment
   if [[ "$STRIP" == "ON" ]]; then
       ${RC_stripaln} -a ${wbn}.stk -f S --nosingle > ${wbn}.strip.stk
       cp -f ${wbn}.strip.stk ${wbn}.stk
@@ -86,6 +88,7 @@ do
 
   # optional: realign stripped MSA with mlocarna here
 
+  # run RNAz
   RNAZ_OPTIONS="-d"
   if [[ "$LOCARNATE" == "ON" ]]; then
       RNAZ_OPTIONS="${RNAZ_OPTIONS} -l"
@@ -97,12 +100,14 @@ do
       rnazprob="-1"
   fi
 
+  # run alifoldz.pl
   ${RC_alifoldz} -f -t 0.0 < ${wbn}.aln > ${wbn}.alifoldz.txt
   alifoldzscore=$(tail -n 1 ${wbn}.alifoldz.txt | grep -m 1 '.')
 
+  # run RNAalifold
   RNAALIFOLD_OPTIONS="-t4 --aln --color -r --cfactor 0.6 --nfactor 0.5 -p --aln-EPS-cols=200 --aln-stk -f S"
   ${RC_rnaalifold} ${RNAALIFOLD_OPTIONS} < ${wbn}.stk > ${wbn}.alifold.out
-  #mv RNAalifold_results.stk ${wbn}.RNAalifold_results.stk
+  mv RNAalifold_results.stk ${wbn}.RNAalifold_results.stk
   #mv alidot.ps ${wbn}.alidot.ps
   #mv alifold.out ${wbn}.alifold.out
   #mv alirna.ps ${wbn}.alirna.ps
@@ -110,6 +115,15 @@ do
   convert ${wbn}_aln.ps ${wbn}_aln.pdf
   convert ${wbn}_ss.ps ${wbn}_ss.pdf
 
+  # refold RNAalifold output
+  ${RC_eslreformat} clustal ${wbn}.RNAalifold_results.stk > ${wbn}.RNAalifold_results.aln
+  ${RC_refold} ${wbn}.RNAalifold_results.aln ${wbn}_dp.ps | ${RC_rnafold} --noPS -C > ${wbn}_refold.out
+
+  # extract first sequence/structure from refold output file
+  refold_firstseq=$(cat ${wbn}_refold.out | head -2 | tail -1)
+  refold_firststruc=$(cat ${wbn}_refold.out | head -3 | tail -1)
+
+  # optional: create CMs
   if [[ "$CM" == ON ]] && [[ $( echo "$rnazprob >= 0.9" | bc -l) -eq 1  ]]
   then
     echo "Building CM for ${wbn} (rnazprob=$rnazprob)"
@@ -119,10 +133,14 @@ do
 
   #RNAplot -a ${wbn}.mlocarna.stk --aln --covar --aln-EPS-cols=300 -t 4 --auto-id --id-prefix ${wbn}.mlocarna
 
-
+  # extract info from RNAalifold output
   ${RC_alifoldmaxcovar} < ${wbn}_ali.out >> $log
   maxcovarval=$?
-  echo "X $wbn maxcovar $maxcovarval $rnazprob $alifoldzscore" >> $log
-  echo "$wbn;$maxcovarval;$rnazprob;$alifoldzscore" >> $logcsv
+  nrseq=$(head -1 ${wbn}_ali.out | perl -ane 'print "$F[0]"')
+  alilen=$(head -1 ${wbn}_ali.out | perl -ane 'print "$F[5]"')
+
+  # dump results
+  echo "X $wbn $nrseq $alilen maxcovar $maxcovarval $rnazprob $alifoldzscore ${refold_firstseq} ${refold_firststruc}" >> $log
+  echo "$wbn;$nrseq;$alilen;$maxcovarval;$rnazprob;$alifoldzscore;${refold_firstseq};${refold_firststruc}" >> $logcsv
 done
 cd ..

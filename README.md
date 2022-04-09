@@ -12,6 +12,7 @@ The main objective of the __RNAConservation__ pipeline is to post-process and ev
 The __RNAConservation__ pipeline builds on different tools of the [ViennaRNA](https://github.com/ViennaRNA/ViennaRNA) metaverse, as well as third-party software:
 
 * [RNAalifold](https://github.com/ViennaRNA/ViennaRNA)
+* [RNAfold](https://github.com/ViennaRNA/ViennaRNA)
 * [RNAz](https://github.com/ViennaRNA/RNAz)
 * [alifoldz](https://github.com/ViennaRNA/RNAz/blob/master/perl/alifoldz.pl)
 * [easel](https://github.com/EddyRivasLab/easel)
