@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Last changed Time-stamp: <2022-04-09 04:08:29 mtw>
+# Last changed Time-stamp: <2022-05-11 10:17:52 mtw>
 
 # This can be used as a RNALalifold post-processor:
 # this script post-processes a set of Stockholm files by doing
@@ -122,6 +122,7 @@ do
   # extract first sequence/structure from refold output file
   refold_firstseq=$(cat ${wbn}_refold.out | head -2 | tail -1)
   refold_firststruc=$(cat ${wbn}_refold.out | head -3 | tail -1)
+  alifold_consstruc=$(fgrep SS_cons ${wbn}.RNAalifold_results.stk | perl -ane 'print $F[2]')
 
   # optional: create CMs
   if [[ "$CM" == ON ]] && [[ $( echo "$rnazprob >= 0.9" | bc -l) -eq 1  ]]
@@ -140,7 +141,7 @@ do
   alilen=$(head -1 ${wbn}_ali.out | perl -ane 'print "$F[5]"')
 
   # dump results
-  echo "X $wbn $nrseq $alilen maxcovar $maxcovarval $rnazprob $alifoldzscore ${refold_firstseq} ${refold_firststruc}" >> $log
-  echo "$wbn;$nrseq;$alilen;$maxcovarval;$rnazprob;$alifoldzscore;${refold_firstseq};${refold_firststruc}" >> $logcsv
+  echo "X $wbn $nrseq $alilen maxcovar $maxcovarval $rnazprob $alifoldzscore ${refold_firstseq} ${refold_firststruc} ${alifold_consstruc}" >> $log
+  echo "$wbn;$nrseq;$alilen;$maxcovarval;$rnazprob;$alifoldzscore;${refold_firstseq};${refold_firststruc};${alifold_consstruc}" >> $logcsv
 done
 cd ..
