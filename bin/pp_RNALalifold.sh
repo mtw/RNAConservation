@@ -135,13 +135,14 @@ do
   #RNAplot -a ${wbn}.mlocarna.stk --aln --covar --aln-EPS-cols=300 -t 4 --auto-id --id-prefix ${wbn}.mlocarna
 
   # extract info from RNAalifold output
-  ${RC_alifoldmaxcovar} < ${wbn}_ali.out >> $log
+  ${RC_alifoldmaxcovar} < ${wbn}_ali.out >> ${wbn}_alifoldmaxcovar.log
   maxcovarval=$?
   nrseq=$(head -1 ${wbn}_ali.out | perl -ane 'print "$F[0]"')
   alilen=$(head -1 ${wbn}_ali.out | perl -ane 'print "$F[5]"')
+  maxcovarcount=$(head -1 ${wbn}_alifoldmaxcovar.log |  perl -ane 'print "$F[1]"')
 
   # dump results
-  echo "X $wbn $nrseq $alilen maxcovar $maxcovarval $rnazprob $alifoldzscore ${refold_firstseq} ${refold_firststruc} ${alifold_consstruc}" >> $log
-  echo "$wbn;$nrseq;$alilen;$maxcovarval;$rnazprob;$alifoldzscore;${refold_firstseq};${refold_firststruc};${alifold_consstruc}" >> $logcsv
+  echo "X $wbn $nrseq $alilen maxcovar $maxcovarval $maxcovarcount $rnazprob $alifoldzscore ${refold_firstseq} ${refold_firststruc} ${alifold_consstruc}" >> $log
+  echo "$wbn;$nrseq;$alilen;$maxcovarval;$maxcovarcount;$rnazprob;$alifoldzscore;${refold_firstseq};${refold_firststruc};${alifold_consstruc}" >> $logcsv
 done
 cd ..

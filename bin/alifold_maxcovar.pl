@@ -5,18 +5,39 @@ use warnings;
 use Data::Dumper;
 
 my $maxcovar=0;
+my $gapali=0;
+my $what;
+my %cov = (
+	   0 => 0,
+	   1 => 0,
+	   2 => 0,
+	   3 => 0,
+	   4 => 0,
+	   5 => 0,
+	   6 => 0);
 
 while(<>){
+  chomp;
+  my $reduce=5;
   next unless (/^\s+\d+/);
   my @data = split;
-  next if ($data[@data-1] =~ /[\+\-]/);
-#  print "-- $data[2]\n";
- if ($data[2]<=2){ # mismatches
-  if (@data-5>$maxcovar){
-    $maxcovar = @data-5;
+  # print "new line: $_\n";
+  if ($data[@data-1] =~ /\-\-\:(\d+)$/){
+    $gapali++;
+    next;
   }
-#  print join ("\t",@data),"\t",$#data,"\n";
+  next if ($data[@data-1] =~ /[\+\-]$/);
+  # print "-- $_ $data[2]\n";
+  if ($data[2]<=2){ # mismatches
+    if (@data-$reduce>=$maxcovar){
+      $maxcovar = @data-$reduce;
+      $cov{$maxcovar}++;
+    }
+    # print join ("\t",@data),"\t[[",$#data,"]]\n";
   }
 }
-#print "==> maxcovar $maxcovar\n";
+
+if ($gapali > 0) { $what = "gapali_".$gapali }
+else { $what = $cov{$maxcovar} }
+print "$maxcovar\t$what";
 exit($maxcovar);
