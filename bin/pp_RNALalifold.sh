@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Last changed Time-stamp: <2022-05-11 10:17:52 mtw>
+# Last changed Time-stamp: <2022-12-31 11:11:53 mtw>
 
 # This can be used as a RNALalifold post-processor:
 # this script post-processes a set of Stockholm files by doing
@@ -32,6 +32,7 @@ CM=OFF         # flag for building a CM
 STRIP=OFF      # flag for stripping redundant lines from MSA
 REMGAP=OFF     # flag for removing gap-only/high-gap fraction lines from MSA
 LOCARNATE=OFF  # flag for making RNAz LocARNA-aware
+DUMPFIRST=OFF   # flag for dumping the structure of the the first sequence in the input alignment
 log="${wd}/pp_RNALalifold.log"
 logcsv="${wd}/pp_RNALalifold.log.csv"
 touch $log
@@ -40,6 +41,11 @@ touch $logcsv
 for i in "$@"
 do
     case $i in
+      -f)             # dump first structure of alignment to output
+    DUMPFIRST=ON
+    shift
+    ;;
+
     -g)             # remove gap-only/high-gap lines from MSA
 	REMGAP=ON
 	shift
@@ -128,10 +134,24 @@ do
   if [[ "$CM" == ON ]] && [[ $( echo "$rnazprob >= 0.9" | bc -l) -eq 1  ]]
   then
     echo "Building CM for ${wbn} (rnazprob=$rnazprob)"
-    ${RC_cmbuild} ${wbn}.cm ${wbn}.stk > ${wbn}.cmbuild.out 2> ${wbn}.cmbuild.err
+    ${RC_cmbuild} ${wbn}.cm ${wbn}.RNAalifold_results.stk > ${wbn}.cmbuild.out 2> ${wbn}.cmbuild.err
     ${RC_cmcalibrate} ${wbn}.cm > ${wbn}.cmcalibrate.out 2> ${wbn}.cmcalibrate.err
+    touch HAVE_CM
   fi
 
+  if [[ "$CM" == ON ]] && [[ $( echo "$alifoldzscore <= -2.0" | bc -l) -eq 1  ]]
+  then
+    if [[ ! -e HAVE_CM ]]
+    then
+      echo "Building CM for ${wbn} (alifoldzscore=$alifoldzscore)"
+      ${RC_cmbuild} ${wbn}.cm ${wbn}.RNAalifold_results.stk > ${wbn}.cmbuild.out 2> ${wbn}.cmbuild.err
+      ${RC_cmcalibrate} ${wbn}.cm > ${wbn}.cmcalibrate.out 2> ${wbn}.cmcalibrate.err
+    fi
+  fi
+  if [[ -e HAVE_CM ]]
+  then
+    rm HAVE_CM
+  fi
   #RNAplot -a ${wbn}.mlocarna.stk --aln --covar --aln-EPS-cols=300 -t 4 --auto-id --id-prefix ${wbn}.mlocarna
 
   # extract info from RNAalifold output
