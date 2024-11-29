@@ -22,17 +22,22 @@ while(<>){
   next unless (/^\s+\d+/);
   my @data = split;
   # print "new line: $_\n";
+	next if ($data[@data-1] =~ /[\+\-]$/);
   if ($data[@data-1] =~ /\-\-\:(\d+)$/){
     $gapali++;
-    next;
   }
-  next if ($data[@data-1] =~ /[\+\-]$/);
-  # print "-- $_ $data[2]\n";
+
+  #print "$_ $data[2] >".eval(@data)."\n";
   if ($data[2]<=2){ # mismatches
-    if (@data-$reduce>=$maxcovar){
-      $maxcovar = @data-$reduce;
-      $cov{$maxcovar}++;
-    }
+		my $covar = @data - $reduce;
+		if ($data[@data-1] =~ /\-\-\:(\d+)$/){
+			$covar--;
+		}
+    if ($covar > $maxcovar){
+      $maxcovar = $covar;
+		}
+  	$cov{$covar}++;
+
     # print join ("\t",@data),"\t[[",$#data,"]]\n";
   }
 }
