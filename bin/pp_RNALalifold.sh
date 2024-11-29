@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Last changed Time-stamp: <2024-11-28 09:59:58 mtw>
+# Last changed Time-stamp: <2024-11-28 10:45:48 mtw>
 
 # This can be used as a RNALalifold post-processor:
 # this script post-processes a set of Stockholm files by doing
@@ -122,10 +122,14 @@ do
   magick ${wbn}_ss.ps ${wbn}_ss.png
 
 
-  # refold RNAalifold output
+  # convert RNAalifold output to clustal format
   ${RC_eslreformat} clustal ${wbn}.RNAalifold_results.stk > ${wbn}.RNAalifold_results.aln
+  cp ${wbn}.RNAalifold_results.aln ${wbn}.RNAalifold_results.aln~
   # remove conservation line from clustal files
   perl -i -ne 'print unless /\*+/' ${wbn}.RNAalifold_results.aln
+  # remove white-space line from the end of the  clustal file
+  perl -0777 -i -pe 's/\s+\z/\n/' ${wbn}.RNAalifold_results.aln
+  # refold RNAalifold output
   ${RC_refold} ${wbn}.RNAalifold_results.aln ${wbn}_dp.ps | ${RC_rnafold} --noPS -C > ${wbn}_refold.out
 
   # extract first sequence/structure from refold output file
